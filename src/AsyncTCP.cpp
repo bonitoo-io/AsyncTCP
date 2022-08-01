@@ -1262,20 +1262,20 @@ void AsyncServer::onClient(AcConnectHandler cb, void* arg){
     _connect_cb_arg = arg;
 }
 
-void AsyncServer::begin(){
+int8_t AsyncServer::begin(){
     if(_pcb) {
-        return;
+        return -1;
     }
 
     if(!_start_async_task()){
         log_e("failed to start task");
-        return;
+        return -2;
     }
     int8_t err;
     _pcb = tcp_new_ip_type(IPADDR_TYPE_V4);
     if (!_pcb){
         log_e("_pcb == NULL");
-        return;
+        return -3;
     }
 
     ip_addr_t local_addr;
@@ -1286,17 +1286,18 @@ void AsyncServer::begin(){
     if (err != ERR_OK) {
         _tcp_close(_pcb, -1);
         log_e("bind error: %d", err);
-        return;
+        return -4;
     }
 
     static uint8_t backlog = 5;
     _pcb = _tcp_listen_with_backlog(_pcb, backlog);
     if (!_pcb) {
         log_e("listen_pcb == NULL");
-        return;
+        return -5;
     }
     tcp_arg(_pcb, (void*) this);
     tcp_accept(_pcb, &_s_accept);
+    return 0;
 }
 
 void AsyncServer::end(){
